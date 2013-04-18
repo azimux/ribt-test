@@ -1,0 +1,92 @@
+#!/bin/sh
+
+
+set -e
+
+if [ ! $PWD ]; then
+  echo '$PWD' not set
+  exit 1
+fi
+mgback=`dirname $PWD`/mgback/mgback
+
+echo running tests with: $mgback
+
+function setup_source {
+  if [ -d '/tmp/mgback-test' ]; then
+    echo "cleaning old test data"
+    rm --one-file-system -r '/tmp/mgback-test/'
+  fi
+
+  mkdir -p '/tmp/mgback-test/source'
+  cd '/tmp/mgback-test/source'
+
+  mkdir .git
+  touch .git/blah.txt
+
+  mkdir .svn
+  touch .svn/blah2.txt
+
+  echo "some data 1" >> some_file.txt
+
+  mkdir subprojects
+  cd subprojects
+
+  for f in subproject{1,2}/{ignore_dir,.git,.svn,files}/whatever.txt ; do
+    mkdir -p `dirname $f`
+    echo "some data" > $f
+  done
+
+
+  mkdir ignore_dir
+  touch ignore_dir/file.txt
+}
+
+function test_init {
+  cd '/tmp/mgback-test/source'
+
+  echo testing init
+  $mgback init
+
+  if [ ! -f .mgback ] || [ ! -f .mgback_excludes ]; then
+    echo init failed
+    exit 1
+  fi
+
+#   let's exclude /ignore_dir  all .git and subproject2/.svn/*
+  echo "/ignore_dir
+.git
+/subproject2/.svn/*
+" >> .mgback_excludes
+
+# let's set the backups_server to localhost and the
+# backups_toplevel_dir to /tmp/mgback-test
+
+  sed -i 's/backups_server=.*$/backups_server=localhost/g' .mgback
+  sed -i 's/backups_toplevel_dir=.*$/backups_toplevel_dir=\/tmp\/mgback-test\/dest/g' .mgback
+  grep "^backups_server=localhost$" .mgback
+  grep "^backups_toplevel_dir=\/tmp\/mgback-test/dest" .mgback
+}
+
+function test_backup {
+  cd '/tmp/mgback-test/source'
+
+  echo testing backup
+  $mgback backup
+
+  cd "/tmp/mgback-test/dest/`hostname -s`/tmp_mgback_test_source/current"
+
+  file_contents=`cat some_file.txt`
+  if [ "${file_contents[0]}" != "some data 1" ]; then
+    echo expected file.txt to contain "some data 1" but it had $file_contents
+    exit 1
+  fi
+}
+
+setup_source
+
+test_init
+test_backup
+test_backup
+
+echo "GREAT JUSTICE!"
+
