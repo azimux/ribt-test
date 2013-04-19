@@ -55,7 +55,7 @@ function test_init {
 #   let's exclude /ignore_dir  all .git and subproject2/.svn/*
   echo "/ignore_dir
 .git
-/subproject2/.svn/*
+/subprojects/subproject2/.svn/*
 " >> .mgback_excludes
 
 # let's set the backups_server to localhost and the
@@ -80,6 +80,16 @@ function test_backup {
     echo expected file.txt to contain "some data 1" but it had $file_contents
     exit 1
   fi
+
+  # make sure no .git directories exist
+  [ ! -d ignore_dir ]
+  [ ! -d .git ]
+  cd subprojects
+  [ ! -d subproject1/.git ]
+  [ ! -d subproject2/.git ]
+  # only one of the .svn's should have a file in it
+  [ -f subproject1/.svn/whatever.txt ]
+  [ ! -f subproject2/.svn/whatever.txt ]
 }
 
 setup_source
