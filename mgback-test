@@ -11,7 +11,7 @@ mgback=`dirname $PWD`/mgback/mgback
 
 echo running tests with: $mgback
 
-function setup_source {
+setup_source() {
   if [ -d '/tmp/mgback-test' ]; then
     echo "cleaning old test data"
     rm --one-file-system -r '/tmp/mgback-test/'
@@ -31,17 +31,19 @@ function setup_source {
   mkdir subprojects
   cd subprojects
 
-  for f in subproject{1,2}/{ignore_dir,.git,.svn,files}/whatever.txt ; do
-    mkdir -p `dirname $f`
-    echo "some data" > $f
+  for d1 in subproject1 subproject2 ; do
+    for d2 in ignore_dir .git .svn files ; do
+      f=$d1/$d2/whatever.txt
+      mkdir -p `dirname $f`
+      echo "some data" > $f
+    done
   done
-
 
   mkdir ignore_dir
   touch ignore_dir/file.txt
 }
 
-function test_init {
+test_init() {
   cd '/tmp/mgback-test/source'
 
   echo testing init
@@ -67,7 +69,7 @@ function test_init {
   grep "^backups_toplevel_dir=\/tmp\/mgback-test/dest" .mgback
 }
 
-function test_backup {
+test_backup() {
   cd '/tmp/mgback-test/source'
 
   echo testing backup
@@ -76,7 +78,7 @@ function test_backup {
   cd "/tmp/mgback-test/dest/`hostname -s`/tmp_mgback_test_source/current"
 
   file_contents=`cat some_file.txt`
-  if [ "${file_contents[0]}" != "some data 1" ]; then
+  if ! grep "^some data 1" some_file.txt > /dev/null; then
     echo expected file.txt to contain "some data 1" but it had $file_contents
     exit 1
   fi
