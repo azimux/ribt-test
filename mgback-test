@@ -94,11 +94,39 @@ test_backup() {
   [ ! -f subproject2/.svn/whatever.txt ]
 }
 
+test_restore() {
+  sleep 1
+  test_backup
+
+  cd '/tmp/mgback-test/source'
+
+  # let's add a file delete a file and modify a file
+  [ ! -f subprojects/subproject2/new_file.txt ]
+  echo "new file!" >> subprojects/subproject2/new_file.txt
+  [ -f subprojects/subproject1/files/whatever.txt ]
+  echo "modified" > subprojects/subproject1/files/whatever.txt
+  rm subprojects/subproject2/files/whatever.txt
+
+  grep "new file!" subprojects/subproject2/new_file.txt
+  grep modified subprojects/subproject1/files/whatever.txt
+  [ ! -f subprojects/subproject2/files/whatever.txt ]
+
+  echo Y | $mgback restore
+
+  [ ! -f subprojects/subproject2/new_file.txt ]
+  if grep modified subprojects/subproject1/files/whatever.txt ; then
+    echo "hmmm, 'modified' should no longer be in subprojects/subproject1/files/whatever.txt"
+  fi
+  [ -f subprojects/subproject2/files/whatever.txt ]
+}
+
 setup_source
 
 test_init
 test_backup
+sleep 1
 test_backup
+test_restore
 
 echo "GREAT JUSTICE!"
 
