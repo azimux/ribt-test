@@ -7,18 +7,18 @@ if [ ! $PWD ]; then
   echo '$PWD' not set
   exit 1
 fi
-mgback=`dirname $PWD`/mgback/mgback
+ribt=`dirname $PWD`/ribt/ribt
 
-echo running tests with: $mgback
+echo running tests with: $ribt
 
 setup_source() {
-  if [ -d '/tmp/mgback-test' ]; then
+  if [ -d '/tmp/ribt-test' ]; then
     echo "cleaning old test data"
-    rm --one-file-system -r '/tmp/mgback-test/'
+    rm --one-file-system -r '/tmp/ribt-test/'
   fi
 
-  mkdir -p '/tmp/mgback-test/source'
-  cd '/tmp/mgback-test/source'
+  mkdir -p '/tmp/ribt-test/source'
+  cd '/tmp/ribt-test/source'
 
   mkdir .git
   touch .git/blah.txt
@@ -44,12 +44,12 @@ setup_source() {
 }
 
 test_init() {
-  cd '/tmp/mgback-test/source'
+  cd '/tmp/ribt-test/source'
 
   echo testing init
-  $mgback init
+  $ribt init
 
-  if [ ! -f .mgback ] || [ ! -f .mgback_excludes ]; then
+  if [ ! -f .ribt ] || [ ! -f .ribt_excludes ]; then
     echo init failed
     exit 1
   fi
@@ -58,24 +58,24 @@ test_init() {
   echo "/ignore_dir
 .git
 /subprojects/subproject2/.svn/*
-" >> .mgback_excludes
+" >> .ribt_excludes
 
 # let's set the backups_server to localhost and the
-# backups_toplevel_dir to /tmp/mgback-test
+# backups_toplevel_dir to /tmp/ribt-test
 
-  sed -i 's/backups_server=.*$/backups_server=localhost/g' .mgback
-  sed -i 's/backups_toplevel_dir=.*$/backups_toplevel_dir=\/tmp\/mgback-test\/dest/g' .mgback
-  grep "^backups_server=localhost$" .mgback
-  grep "^backups_toplevel_dir=\/tmp\/mgback-test/dest" .mgback
+  sed -i 's/backups_server=.*$/backups_server=localhost/g' .ribt
+  sed -i 's/backups_toplevel_dir=.*$/backups_toplevel_dir=\/tmp\/ribt-test\/dest/g' .ribt
+  grep "^backups_server=localhost$" .ribt
+  grep "^backups_toplevel_dir=\/tmp\/ribt-test/dest" .ribt
 }
 
 test_backup() {
-  cd '/tmp/mgback-test/source'
+  cd '/tmp/ribt-test/source'
 
   echo testing backup
-  $mgback backup
+  $ribt backup
 
-  cd "/tmp/mgback-test/dest/`hostname -s`/tmp_mgback_test_source/current"
+  cd "/tmp/ribt-test/dest/`hostname -s`/tmp_ribt_test_source/current"
 
   file_contents=`cat some_file.txt`
   if ! grep "^some data 1" some_file.txt > /dev/null; then
@@ -98,7 +98,7 @@ test_restore() {
   sleep 1
   test_backup
 
-  cd '/tmp/mgback-test/source'
+  cd '/tmp/ribt-test/source'
 
   # let's add a file delete a file and modify a file
   [ ! -f subprojects/subproject2/new_file.txt ]
@@ -111,7 +111,7 @@ test_restore() {
   grep modified subprojects/subproject1/files/whatever.txt
   [ ! -f subprojects/subproject2/files/whatever.txt ]
 
-  echo Y | $mgback restore
+  echo Y | $ribt restore
 
   [ ! -f subprojects/subproject2/new_file.txt ]
   if grep modified subprojects/subproject1/files/whatever.txt ; then
