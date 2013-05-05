@@ -60,6 +60,9 @@ test_init() {
 /subprojects/subproject2/.svn/*
 " >> .ribt_excludes
 
+# let's make sure the default backups_sub_dir is set in a comment.
+  grep "backups_sub_dir=tmp_ribt_test_source$" .ribt
+
 # let's set the backups_server to localhost and the
 # backups_toplevel_dir to /tmp/ribt-test
 
